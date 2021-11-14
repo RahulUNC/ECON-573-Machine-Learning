@@ -1,0 +1,289 @@
+---
+title: "ECON 573 Problem Set 1 Part 2 and 3"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+## Part 2
+
+8a) Use the read.csv() function to read the data into R. Call the
+loaded data college. Make sure that you have the directory set
+to the correct location for the data.
+```{r}
+college = read.csv("College.csv")
+```
+
+8b) Look at the data using the fix() function. You should notice
+that the first column is just the name of each university.We don’t
+really want R to treat this as data. However, it may be handy to
+have these names for later. Try the following commands:
+```{r}
+rownames(college) = college[,1]
+college = fix(college)
+college = college [,-1]
+college = fix(college)
+
+```
+
+8ci) Use the summary() function to produce a numerical summary
+of the variables in the data set.
+```{r}
+summary(college)
+```
+
+8cii). Use the pairs() function to produce a scatterplot matrix of
+the first ten columns or variables of the data. Recall that
+you can reference the first ten columns of a matrix A using
+A[,1:10].
+```{r}
+college[,1] = as.numeric(factor(college[,1]))
+pairs(college[, 1:10])
+```
+
+8ciii) Use the plot() function to produce side-by-side boxplots of
+Outstate versus Private.
+```{r}
+attach(college)
+boxplot(Outstate ~ Private, xlab = "Private", ylab = "Outstate")
+```
+
+8civ) Create a new qualitative variable, called Elite, by binning
+the Top10perc variable. We are going to divide universities
+into two groups based on whether or not the proportion
+of students coming from the top 10% of their high school
+classes exceeds 50%.
+```{r}
+Elite = rep("No",nrow(college ))
+Elite [college$Top10perc >50]=" Yes"
+Elite = as.factor (Elite)
+college = data.frame(college ,Elite)
+```
+Use the summary() function to see how many elite universities
+there are. Now use the plot() function toproduce
+side-by-side boxplots of Outstate versus Elite.
+```{r}
+summary(college$Elite)
+boxplot(college$Outstate ~ college$Elite, xlab = "Elite", ylab = "Outstate")
+```
+
+8cv) Use the hist() function to produce some histograms with
+differing numbers of bins for a few of the quantitative variables.
+You may find the command par(mfrow=c(2,2)) useful:
+it will divide the print window into four regions so that four
+plots can be made simultaneously. Modifying the arguments
+to this function will divide the screen in other ways.
+```{r}
+par(mfrow=c(2,2))
+hist(college$S.F.Ratio, breaks = 5)
+hist(college$perc.alumni, breaks = 6)
+hist(college$Grad.Rate, breaks = 8)
+hist(college$P.Undergrad, breaks = 4)
+```
+
+8cvi) Continue exploring the data, and provide a brief summary
+of what you discover.
+
+9) This exercise involves the Auto data set studied in the lab. Make sure
+that the missing values have been removed from the data.
+```{r}
+auto = read.csv("Auto.csv")
+auto = na.omit(auto)
+detach(college)
+attach(auto)
+```
+
+9a) Which of the predictors are quantitative, and which are qualitative?
+```{r}
+sapply(auto, class)
+```
+From the output of the command it seems as if name is the only qualitative variable
+
+9b) What is the range of each quantitative predictor? You can answer
+this using the range() function.
+```{r}
+apply(auto[,1:7], 2, range)
+```
+
+9c) What is the mean and standard deviation of each quantitative
+predictor?
+```{r}
+sapply(auto[,1:7], mean, na.rm = TRUE)
+sapply(auto[,1:7], sd, na.rm = TRUE)
+```
+
+9d) Now remove the 10th through 85th observations. What is the
+range, mean, and standard deviation of each predictor in the
+subset of the data that remains?
+```{r}
+sapply(auto[-c(10:85),1:7], range, na.rm = TRUE)
+sapply(auto[-c(10:85),1:7], mean, na.rm = TRUE)
+sapply(auto[-c(10:85),1:7], sd, na.rm = TRUE)
+```
+
+9e) Using the full data set, investigate the predictors graphically,
+using scatterplots or other tools of your choice. Create some plots
+highlighting the relationships among the predictors. Comment
+on your findings.
+```{r}
+auto$horsepower <- as.numeric(type.convert(auto$horsepower))
+pairs(auto[,1:7])
+```
+
+9f) Suppose that we wish to predict gas mileage (mpg) on the basis
+of the other variables. Do your plots suggest that any of the
+other variables might be useful in predicting mpg? Justify your
+answer.
+```{r}
+regression = lm(mpg ~ cylinders+year+weight+horsepower+displacement+acceleration+origin, data= auto)
+regression
+```
+
+10) This exercise involves the Boston housing data set.
+```{r}
+library(MASS)
+data(Boston)
+```
+
+10a) How many rows are in this data set? How many columns? What
+do the rows and columns represent?
+506 rows, 14 columns
+```{r}
+dim(Boston)
+```
+
+10b) Make some pairwise scatterplots of the predictors (columns) in
+this data set. Describe your findings.
+looking att the pairs theres a large jumble of data, some of the variable are definitely coorelated
+while others seem to show nothing at all
+```{r}
+pairs(Boston)
+```
+
+10c) Are any of the predictors associated with per capita crime rate?
+If so, explain the relationship.
+It seems that variables with the strongest correlation coefficient are possitive
+```{r}
+Boston.corr.crim = cor(Boston)[-1,1]
+print(Boston.corr.crim[order(abs(Boston.corr.crim))])
+```
+
+10d) Do any of the suburbs of Boston appear to have particularly
+high crime rates? Tax rates? Pupil-teacher ratios? Comment on
+the range of each predictor.
+-About 15 sububurs have high crime rates
+-There seems to be one outlier in the data, but otherwise tax is uniform
+-There seems to be higher skew in teacher ratios
+```{r}
+par(mfrow=c(1,3))
+hist(Boston$crim[Boston$crim > 1], breaks=15)
+hist(Boston$tax, breaks=15)
+hist(Boston$ptratio, breaks=15)
+```
+
+10e) How many of the suburbs in this data set bound the Charles
+river?
+```{r}
+sum(Boston$chas == 1)
+```
+
+10f) What is the median pupil-teacher ratio among the towns in this
+data set?
+```{r}
+median(Boston$ptratio)
+```
+
+10g) Which suburb of Boston has lowest median value of owneroccupied
+homes? What are the values of the other predictors
+for that suburb, and how do those values compare to the overall
+ranges for those predictors? Comment on your findings.
+```{r}
+t(subset(Boston, medv == min(medv)))
+```
+
+10h) In this data set, how many of the suburbs average more than
+seven rooms per dwelling? More than eight rooms per dwelling?
+Comment on the suburbs that average more than eight rooms
+per dwelling.
+```{r}
+sum(Boston$rm > 7)
+sum(Boston$rm > 8)
+summary(subset(Boston, rm > 8))
+```
+
+## Part 3
+
+These lines of code are from the starter file!
+```{r}
+benjer = read.csv("BenAndJerry.csv")
+names(benjer)
+priceper1 = (benjer$price_paid_deal + benjer$price_paid_non_deal)/benjer$quantity
+y <- log(1+priceper1)
+x <- benjer[,c("flavor_descr","size1_descr",
+	"household_income","household_size")]
+x$flavor_descr <- relevel(factor(x$flavor_descr),"VAN")
+x$usecoup = factor(benjer$coupon_value>0)
+x$couponper1 <- benjer$coupon_value/benjer$quantity
+x$region <- factor(benjer$region, 
+	levels=1:4, labels=c("East","Central","South","West"))
+x$married <- factor(benjer$marital_status==1)
+x$race <- factor(benjer$race,
+	levels=1:4,labels=c("white","black","asian","other"))
+x$hispanic_origin <- benjer$hispanic_origin==1
+x$microwave <- benjer$kitchen_appliances %in% c(1,4,5,7)
+x$dishwasher <- benjer$kitchen_appliances %in% c(2,4,6,7)
+x$sfh <- benjer$type_of_residence==1
+x$internet <- benjer$household_internet_connection==1
+x$tvcable <- benjer$tv_items>1
+fit <- glm(y~., data=x) 
+pvals <- summary(fit)$coef[-1,4]  
+par(mfrow=c(1,1))
+par(mar=c(5,10,5,5))
+barplot(table(benjer$flavor),border=NA, las=2)
+class(benjer$promotion_type)
+barplot(table(benjer$flavor),border=NA, las=2)
+hist(y); hist(priceper1);
+hist(benjer$promotion_type)
+hist(benjer$household_income)
+hist(benjer$age_of_female_head)
+hist(benjer$age_of_male_head)
+hist(benjer$race)
+num_cols <- unlist(lapply(benjer, is.numeric))
+boxplot(y[benjer$promotion_type>0] ~ benjer$promotion_type, col= levels(factor(benjer$promotion)))
+summary(fit)
+fit2 <- glm(y~. - flavor_descr, data=x) 
+summary(fit2)
+fit3 <- glm(y~. -flavor_descr -race -dishwasher - hispanic_origin, data=x)
+summary(fit3)
+fit4 <- glm(y~. -flavor_descr -race -dishwasher - hispanic_origin -internet -tvcable, data=x)
+summary(fit4)
+n=nrow(x)
+BIC <- c(reg1=extractAIC(fit, k=log(n))[2],
+         reg2=extractAIC(fit2, k=log(n))[2],
+         reg3=extractAIC(fit3, k=log(n))[2],
+         reg4=extractAIC(fit4, k=log(n))[2])
+eBIC <- exp(-0.5*(BIC-min(BIC)))
+probs <- eBIC/sum(eBIC)
+round(probs, 5)
+```
+1. Explore the data and visualize: what variables are interesting? Choose a few, plot
+them together, and tell a story.
+As can be seen from the dataset the age of heads seems to have a large significan amount at the younger
+population as it steadliy increases throughout the age group.Those who do eat at ben and jerry's also
+tend to have an higher household income. Furthermore the majority of people tend to of race type 1.
+There also seems to be a higher spread among promotions of type 3
+
+2. Describe the regression model in the code. Improve it?
+The first model is a baseline in which the log of price per ice cream is regressed against many variables.
+When the flavor variable was taken out it was found that, asian, hispanic, and dishwashwer, were not
+significant so they were taken out of the model, which is the third one. Perhaps one way to improve the
+model is to only include regressors that are significant at the 0.01 alpha level. If this is done, we remove
+the varialbe internet and tvcable. Doing so will show a higher BIC value for this model. This can be seen
+in the code by fit4
+
+3. Take the p-values from your regression and look for evidence of association. Relate
+what you learn to your story from 1.
+From the p-values it can be seen that all aggressors in fit4 are statistically signifcant at the 0.1
+alpha level. Thus the variables of size1_descr32.0 MLOZ  0.3121873  0.0077971  40.039  < 2e-16 ***
+household_income, household_size, usecoupTRUE, couponper1, regionCentral, regionSouth,regionWest, 
+marriedTRUE, microwaveTRUE, and sfhTRUE do seem to have an association on the log of price.

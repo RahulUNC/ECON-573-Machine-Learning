@@ -1,0 +1,455 @@
+---
+title: "ECON 573 Problem Set 2"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+---
+
+## Part 1
+Ex 1, 3, 4, from Chapter 3 of ISL.
+
+1) Describe the null hypotheses to which the p-values given in Table 3.4
+correspond. Explain what conclusions you can draw based on these
+p-values. Your explanation should be phrased in terms of sales, TV,
+radio, and newspaper, rather than in terms of the coefficients of the
+linear model.
+
+The null hypothesis is that TV, radio, and newspapper advertising have
+no effect on sales. After conduting the test, we reject the null
+hypothesis that sales TV and radio have no effect on sales. However,
+we fail to reject the null that newspaper advertising has no effect
+on sales
+
+3) Suppose we have a data set with five predictors, X1 =GPA, X2 = IQ,
+X3 = Gender (1 for Female and 0 forMale), X4 = Interaction between
+GPA and IQ, and X5 = Interaction between GPA and Gender. The
+response is starting salary after graduation (in thousands of dollars).
+Suppose we use least squares to fit the model, and get ^B0 = 50, ^B1 =
+20, ^B2 = 0.07, ^B3 = 35, ^B4 = 0.01, ^B5 = -10.
+
+3a) Which answer is correct, and why?
+Male = 50 + 20(gpa) + 0.07(iq) + 0.01(iqandgpa)
+Female = 85 + 10(gpa) + 0.07(iq) + 0.01(iqandgpa)
+Point iii is the most valid one
+
+3b) Predict the salary of a female with IQ of 110 and a GPA of 4.0.
+Female = 85 + 10(4) + 0.07(110) + 0.01(110*4) = 137.1
+
+3c) True or false: Since the coefficient for the GPA/IQ interaction
+term is very small, there is very little evidence of an interaction
+effect. Justify your answer.
+Flase, just because the coefficient is realtively small doesnt mean
+that there is littler interaction effect. A true test would be to
+test if the interaction term is 0
+
+4) I collect a set of data (n = 100 observations) containing a single
+predictor and a quantitative response. I then fit a linear regression
+model to the data, as well as a separate cubic regression, i.e. Y =
+B0 + B1X + B2X2 + B3X3 + .
+
+4a) Suppose that the true relationship between X and Y is linear,
+i.e. Y = B0 + B1X + . Consider the training residual sum of
+squares (RSS) for the linear regression, and also the training
+RSS for the cubic regression. Would we expect one to be lower
+than the other, would we expect them to be the same, or is there
+not enough information to tell? Justify your answer.
+It should be expected that the cubic regression RSS is less than
+that of the linear regression due to more flexibility with the 
+cubic
+
+4b) Answer (a) using test rather than training RSS.
+
+4c) Suppose that the true relationship between X and Y is not linear,
+but we don’t know how far it is from linear. Consider the training
+RSS for the linear regression, and also the training RSS for the
+cubic regression. Would we expect one to be lower than the
+other, would we expect them to be the same, or is there not
+enough information to tell? Justify your answer.
+
+4d) Answer (c) using test rather than training RSS.
+
+## Part 2
+
+8) This question involves the use of simple linear regression on the Auto
+data set.
+8a) Use the lm() function to perform a simple linear regression with
+mpg as the response and horsepower as the predictor. Use the
+summary() function to print the results. Comment on the output.
+```{r}
+library(ISLR)
+data("Auto")
+names(Auto)
+linreg = lm(mpg ~ horsepower, data = Auto)
+summary(linreg)
+```
+At all standard significance levels the p values are significant,
+indicating association between mpg and horsepower. The R^2 values
+suggests that 60.5% of the variation in mpg is due to horsepower.
+There seems to be a moderately strong negative association between
+mpg and horsepower.
+
+8b) Plot the response and the predictor. Use the abline() function
+to display the least squares regression line.
+```{r}
+plot(Auto$mpg ~ Auto$horsepower, xlab="Horsepower", ylab="Mpg")
+```
+
+8c) Use the plot() function to produce diagnostic plots of the least
+squares regression fit. Comment on any problems you see with
+the fit.
+```{r}
+par(mfrow=c(2,2))
+plot(linreg)
+```
+From the plots it can be seen that the relationship between is not linear, normally distributed, constant variance, an no major leverage points
+
+9) This question involves the use of multiple linear regression on the
+Auto data set.
+9a) Produce a scatterplot matrix which includes all of the variables
+in the data set.
+```{r}
+Auto$horsepower <- as.numeric(type.convert(Auto$horsepower))
+pairs(Auto[,1:7])
+```
+
+9b) Compute the matrix of correlations between the variables using
+the function cor(). You will need to exclude the name variable,
+cor() which is qualitative.
+```{r}
+cor(Auto[,1:7])
+```
+
+9c) Use the lm() function to perform a multiple linear regression
+with mpg as the response and all other variables except name as
+the predictors. Use the summary() function to print the results.
+Comment on the output.
+```{r}
+attach(Auto)
+multiple = lm(mpg ~. -name, data = Auto) 
+summary(multiple)
+```
+All but cylinders, acceleration, and horsepower are statistically significant.
+The R^2 value of 82.15% implies that 82% of the variation in mpg is explained by
+the said reggressors.
+
+9d) Use the plot() function to produce diagnostic plots of the linear
+regression fit. Comment on any problems you see with the fit.
+Do the residual plots suggest any unusually large outlines? Does
+the leverage plot identify any observations with unusually high
+leverage?
+```{r}
+par(mfrow=c(2,2))
+plot(multiple)
+```
+There seems to be a non-linear relationship between the aggressors,
+while the residuals are normally distributed there does seem
+to be some that are skewed to the right. There also seem to be
+one outlier leberage poin in the fourth graph
+
+9e) Use the * and : symbols to fit linear regression models with
+interaction effects. Do any interactions appear to be statistically
+significant?
+```{r}
+multiple = lm(mpg ~. -name + horsepower*weight + year*acceleration + cylinders*weight + cylinders*displacement, data = Auto) 
+summary(multiple)
+```
+From this regressions outcomes that are statistically significant
+include the interaction term between acceleration and year as
+well as horsepower and weight
+
+9f) Try a few different transformations of the variables, such as
+log(X), sqrt(X), X2. Comment on your findings.
+```{r}
+multiple = lm(mpg ~ . - name + log(horsepower) + sqrt(weight) + I(displacement^2),data=Auto)
+summary(multiple)
+```
+In this regression only the log of horsepower proved to be significant
+
+13) In this exercise you will create some simulated data and will fit simple
+linear regression models to it. Make sure to use set.seed(1) prior to
+starting part (a) to ensure consistent results.
+13a) Using the rnorm() function, create a vector, x, containing 100
+observations drawn from a N(0, 1) distribution. This represents
+a feature, X.
+```{r}
+X = rnorm(100, mean = 0, sd = 1)
+```
+
+13b) Using the rnorm() function, create a vector, eps, containing 100
+observations drawn from a N(0, 0.25) distribution i.e. a normal
+distribution with mean zero and variance 0.25.
+```{r}
+eps = rnorm(100, mean = 0, sd = sqrt(0.25))
+```
+
+13c) Using x and eps, generate a vector y according to the model
+Y = -1 + 0.5X + eps. (3.39)
+What is the length of the vector y? What are the values of B0
+and B1 in this linear model?
+```{r}
+y = -1 + 0.5*X + eps
+```
+y is a vector of 100 elements, B0 is -1, B1 is 0.5
+
+13d) Create a scatterplot displaying the relationship between x and
+y. Comment on what you observe.
+```{r}
+plot(X, y)
+```
+There seems to be a moderately strong positive linear association between
+Y and X
+
+13e) Fit a least squares linear model to predict y using x. Comment
+on the model obtained. How do B0 and B1 compare to B0 and
+B1?
+```{r}
+reg = lm(y~X)
+summary(reg)
+```
+Both of the predicted variables are generally close to -1 and 0.5,
+both are statistically significant
+
+13f) Display the least squares line on the scatterplot obtained in (d).
+Draw the population regression line on the plot, in a different
+color. Use the legend() command to create an appropriate legend.
+```{r}
+plot(X, y)
+abline(reg, col=1)
+abline(-1, 0.5, col=2)
+legend("topleft",legend=c("model","actual"), col=1:2, lwd = 1)
+```
+
+13g) Now fit a polynomial regression model that predicts y using x
+and x2. Is there evidence that the quadratic term improves the
+model fit? Explain your answer.
+```{r}
+squared = lm(y ~ X + I(X^2))
+summary(squared)
+```
+The R^2 value is every so slightly stronger than the previous one,
+but not by much
+
+13h) Repeat (a)–(f) after modifying the data generation process in
+such a way that there is less noise in the data. The model (3.39)
+should remain the same. You can do this by decreasing the variance
+of the normal distribution used to generate the error term
+ǫ in (b). Describe your results.
+```{r}
+eps = rnorm(100, 0, 0.1)
+y = -1 + 0.5*X + eps
+lessNoise = lm(y~X)
+summary(lessNoise)
+plot(X, y)
+abline(lessNoise, col=1)
+abline(-1, 0.5, col=2)
+legend("topleft",legend=c("model","actual"), col=1:2, lwd = 1)
+```
+The R2 value is significantly stronger and there is a smaller gap between the trend lines
+
+13i) Repeat (a)–(f) after modifying the data generation process in
+such a way that there is more noise in the data. The model (3.39)
+should remain the same. You can do this by increasing the variance
+of the normal distribution used to generate the error term
+ǫ in (b). Describe your results.
+```{r}
+eps = rnorm(100, 0, 1)
+y = -1 + 0.5*X + eps
+moreNoise = lm(y~X)
+summary(moreNoise)
+plot(X, y)
+abline(moreNoise, col=1)
+abline(-1, 0.5, col=2)
+legend("topleft",legend=c("model","actual"), col=1:2, lwd = 1)
+```
+The R2 value is significanly weeker adn there is a bigger gap between the trend lines
+
+13j) What are the confidence intervals for B0 and B1 based on the
+original data set, the noisier data set, and the less noisy data
+set? Comment on your results.
+```{r}
+confint(lessNoise)
+confint(reg)
+confint(moreNoise)
+```
+
+15) This problem involves the Boston data set, which we saw in the lab
+for this chapter. We will now try to predict per capita crime rate
+using the other variables in this data set. In other words, per capita
+crime rate is the response, and the other variables are the predictors.
+
+15a) For each predictor, fit a simple linear regression model to predict
+the response. Describe your results. In which of the models is
+there a statistically significant association between the predictor
+and the response? Create some plots to back up your assertions.
+```{r}
+detach(Auto)
+library(MASS)
+attach(Boston)
+reg = lm(crim ~ ., data=Boston)
+ZN = lm(crim ~ zn)
+summary(ZN)
+INDUS = lm(crim ~ indus)
+summary(INDUS)
+CHAS = lm(crim ~ chas)
+summary(CHAS)
+NOX = lm(crim ~ nox)
+summary(NOX)
+RM = lm(crim ~ rm)
+summary(RM)
+AGE = lm(crim ~ age)
+summary(AGE)
+DIS = lm(crim ~ dis)
+summary(DIS)
+RAD = lm(crim ~ rad)
+summary(RAD)
+TAX = lm(crim ~ tax)
+summary(TAX)
+PTRATIO = lm(crim ~ ptratio)
+summary(PTRATIO)
+BLACK = lm(crim ~ black)
+summary(BLACK)
+LSTAT = lm(crim ~ lstat)
+summary(LSTAT)
+MEDV = lm(crim ~ medv)
+summary(MEDV)
+```
+Of all the variables, zn, dis, rad, black, and medev are significant
+```{r}
+par(mfrow=c(3,2))
+plot(zn, crim)
+plot(dis, crim)
+plot(rad, crim)
+plot(black, crim)
+plot(medv, crim)
+```
+
+15b) Fit a multiple regression model to predict the response using
+all of the predictors. Describe your results. For which predictors
+can we reject the null hypothesis H0 : Bj = 0?
+```{r}
+reg = lm(crim ~ ., data=Boston)
+summary(reg)
+```
+Based on the data at all standard significance levels we reject the null
+hypothesis for dis and rad. At the 0.01 level we reject med, and at the 
+0.05 level we reject zn, and black. We fail to reject the null for 
+all other regressors
+
+15c) How do your results from (a) compare to your results from (b)?
+Create a plot displaying the univariate regression coefficients
+from (a) on the x-axis, and the multiple regression coefficients
+from (b) on the y-axis. That is, each predictor is displayed as a
+single point in the plot. Its coefficient in a simple linear regression
+model is shown on the x-axis, and its coefficient estimate
+in the multiple linear regression model is shown on the y-axis.
+```{r}
+coeff = c(ZN$coefficients[2], INDUS$coefficients[2],
+          CHAS$coefficients[2], NOX$coefficients[2],
+          RM$coefficients[2], AGE$coefficients[2],
+          DIS$coefficients[2], RAD$coefficients[2],
+          TAX$coefficients[2], PTRATIO$coefficients[2],
+          BLACK$coefficients[2], LSTAT$coefficients[2],
+          MEDV$coefficients[2])
+plot(coeff, reg$coefficients[2:14], xlab = "UNI", ylab = "MULTI")
+```
+
+15d) Is there evidence of non-linear association between any of the
+predictors and the response?
+```{r}
+ZN = lm(crim ~ zn + I(zn^2) + I(zn^3))
+summary(ZN)
+INDUS = lm(crim ~ indus + I(indus^2) + I(indus^3))
+summary(INDUS)
+CHAS = lm(crim ~ chas + I(chas^2) + I(chas^3))
+summary(CHAS)
+NOX = lm(crim ~ nox + I(nox^2) + I(nox^3))
+summary(NOX)
+RM = lm(crim ~ rm + I(rm^2) + I(rm^3))
+summary(RM)
+AGE = lm(crim ~ age + I(age^2) + I(age^3))
+summary(AGE)
+DIS = lm(crim ~ dis + I(dis^2) + I(dis^3))
+summary(DIS)
+RAD = lm(crim ~ rad + I(rad^2) + I(rad^3))
+summary(RAD)
+TAX = lm(crim ~ tax + I(tax^2) + I(tax^3))
+summary(TAX)
+PTRATIO = lm(crim ~ ptratio + I(ptratio^2) + I(ptratio^3))
+summary(PTRATIO)
+BLACK = lm(crim ~ black + I(black^2) + I(black^3))
+summary(BLACK)
+LSTAT = lm(crim ~ lstat + I(lstat^2) + I(lstat^3))
+summary(LSTAT)
+MEDV = lm(crim ~ medv + I(medv^2) + I(medv^3))
+summary(MEDV)
+```
+From this output it can be concluded that 
+indux, nox, dis, ptratio, and medv have a relationship
+that maybe non-linear
+
+## Part 3
+
+1) Plot some relationships and tell a story
+```{r}
+homes = read.csv("homes2004.csv")
+detach(Boston)
+attach(homes)
+par(mfrow=c(2,2))
+hist(VALUE)
+plot(VALUE ~ factor(BATHS))
+plot(VALUE ~ factor(METRO))
+plot(VALUE ~ factor(BEDRMS))
+```
+Most home are of lower value, and as the number of bathroom increases home value seems to increase.
+The Median value of rural homes also seems to be every so slightly higher than the urban values.
+Interestingly after adding more Bedrooms it seems as if home value levels off rather than increasing.
+There also seems to be more range in the price of home with bedrooms in between 2 and 7
+
+2) Regress log value onto all but mortgage and purchase $.
+```{r}
+logPrice = glm(log(VALUE) ~ . -AMMORT -LPRICE, data = homes)
+summary(logPrice)
+```
+
+2i)How many coefficients are jointly significant at 10%?
+34 of the coefficient are statically significant at the 0.1 alpha level
+
+2ii)Re-run regression with only the significant covariates, and compare R2
+to the full model.
+```{R}
+p = summary(logPrice)$coefficients[-1,4]
+names(p)[p > 0.1]
+logPrice2 = glm(log(VALUE) ~ . -AMMORT -LPRICE -ECOM1 -EGREEN -ELOW1 -ODORA -PER, data = homes)
+summary(logPrice2)
+```
+
+3) Fit a regression for whether the buyer had >= 20% down (again, onto everything but
+AMMORT and LPRICE).
+```{r}
+homes$twentyDown = factor((LPRICE-AMMORT)/AMMORT > 0.2)
+twenty = glm(twentyDown ~ . -AMMORT -LPRICE, data=homes, family='binomial')
+summary(twenty)
+```
+
+3i) Interpret effects for 1st home buyers and # of bathrooms.
+```{r}
+firstTime = glm(twentyDown ~ . -AMMORT -LPRICE +FRSTHO*BATHS, data=homes, family='binomial')
+summary(firstTime)
+```
+If the house has more bathroom then a first time buyer seems
+to be less likely to pay the 20% downpayment as opposed to someone
+who is not a first time buyer
+
+4) Re-fit your model from Q3 for only homes worth > 100k. Compare in-sample fit to R2
+for predicting homes worth < 100k.
+```{r}
+greaterThan100 = glm(twentyDown ~ . -AMMORT -LPRICE, data=homes, subset = VALUE > 100000, family = 'binomial')
+summary(greaterThan100)
+lessThan100 = glm(twentyDown ~ . -AMMORT -LPRICE, data=homes, subset = VALUE < 100000, family = 'binomial')
+summary(lessThan100)
+```
+R^2 for greater than 100k: 1 - (14320/16099) = 0.110
+R^2 for less than 100k: 1 - (3062.9/3322.7) = 0.078
+The R^2 for greater than 100k is stronger than that of R^2 for less thank 100k

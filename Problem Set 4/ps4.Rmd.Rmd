@@ -1,0 +1,354 @@
+---
+title: "ECON 573 PS4"
+author: "Rahul Narvekar"
+date: "10/19/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 1
+Ex 3, 5, 6 from Chapter 5 of ISL.
+
+3) We now review k-fold cross-validation.
+
+3a) Explain how k-fold cross-validation is implemented.
+The k-fold cross validation is done by randomly dividing all of your groups
+into k parts, and then training your model on k-1 parts. After taking the 
+average of all the k-1 parts, use the last kth part as your testing set for
+your trained model
+
+3b) What are the advantages and disadvantages of k-fold crossvalidation
+relative to:
+
+3bi) Validation Set Approach:
+There could be a hihgly variable test error. Can also tend to overestimate
+the test error. 
+
+3bii) LOOCV:
+LOOCV tends to be expensive and requires fits as large as n. K fold can also
+give better test error. However LOOCV will still provide lower bias
+
+
+5) In Chapter 4, we used logistic regression to predict the probability of
+default using income and balance on the Default data set. We will
+now estimate the test error of this logistic regression model using the
+validation set approach. Do not forget to set a random seed before
+beginning your analysis.
+
+5a) Fit a logistic regression model that uses income and balance to
+predict default.
+```{r}
+set.seed(123)
+library(ISLR)
+attach(Default)
+logistic = glm(default ~ income + balance, family = "binomial", data = Default)
+summary(logistic)
+```
+
+5b) Using the validation set approach, estimate the test error of this
+model. In order to do this, you must perform the following steps:
+
+5bi) Split the sample set into a training set and a validation set.
+```{r}
+trainingSet = sample(dim(Default)[1], dim(Default)[1]* 0.6)
+```
+
+5bii) Fit a multiple logistic regression model using only the training
+observations.
+```{r}
+log.fit = glm(default ~ income + balance, data = Default, family = "binomial", subset = trainingSet)
+summary(log.fit)
+```
+
+5biii) Obtain a prediction of default status for each individual in
+the validation set by computing the posterior probability of
+default for that individual, and classifying the individual to
+the default category if the posterior probability is greater
+than 0.5.
+```{r}
+pVals = predict(log.fit, newdata = Default[-trainingSet, ], type = "response")
+predictions = rep("No", length(pVals))
+predictions[pVals > 0.5] = "Yes"
+```
+
+5biv) Compute the validation set error, which is the fraction of
+the observations in the validation set that are misclassified.
+```{r}
+mean(predictions != Default[-trainingSet, ]$default)
+```
+
+5c) Repeat the process in (b) three times, using three different splits
+of the observations into a training set and a validation set. Comment
+on the results obtained.
+```{r}
+trainingSet = sample(dim(Default)[1], dim(Default)[1]* 0.7)
+log.fit = glm(default ~ income + balance, data = Default, family = "binomial", subset = trainingSet)
+pVals = predict(log.fit, newdata = Default[-trainingSet, ], type = "response")
+predictions = rep("No", length(pVals))
+predictions[pVals > 0.5] = "Yes"
+paste("70%: ", toString(mean(predictions != Default[-trainingSet, ]$default)))
+
+trainingSet = sample(dim(Default)[1], dim(Default)[1]* 0.8)
+log.fit = glm(default ~ income + balance, data = Default, family = "binomial", subset = trainingSet)
+pVals = predict(log.fit, newdata = Default[-trainingSet, ], type = "response")
+predictions = rep("No", length(pVals))
+predictions[pVals > 0.5] = "Yes"
+paste("80%: ", toString(mean(predictions != Default[-trainingSet, ]$default)))
+
+trainingSet = sample(dim(Default)[1], dim(Default)[1]* 0.9)
+log.fit = glm(default ~ income + balance, data = Default, family = "binomial", subset = trainingSet)
+pVals = predict(log.fit, newdata = Default[-trainingSet, ], type = "response")
+predictions = rep("No", length(pVals))
+predictions[pVals > 0.5] = "Yes"
+paste("90%: ", toString(mean(predictions != Default[-trainingSet, ]$default)))
+```
+error rate is variable depending on how mnay observations are used in the
+model
+
+5d) Now consider a logistic regression model that predicts the probability
+of default using income, balance, and a dummy variable
+for student. Estimate the test error for this model using the validation
+set approach. Comment on whether or not including a
+dummy variable for student leads to a reduction in the test error
+rate.
+```{r}
+trainingSet = sample(dim(Default)[1], dim(Default)[1]* 0.7)
+log.fit = glm(default ~ income + balance + student, data = Default, family = "binomial", subset = trainingSet)
+pVals = predict(log.fit, newdata = Default[-trainingSet, ], type = "response")
+predictions = rep("No", length(pVals))
+predictions[pVals > 0.5] = "Yes"
+paste("60% with student: ", toString(mean(predictions != Default[-trainingSet, ]$default)))
+```
+Does not seem like adding student helped reduce test error
+
+6) We continue to consider the use of a logistic regression model to
+predict the probability of default using income and balance on the
+Default data set. In particular, we will now compute estimates for
+the standard errors of the income and balance logistic regression coefficients
+in two different ways: (1) using the bootstrap, and (2) using
+the standard formula for computing the standard errors in the glm()
+function. Do not forget to set a random seed before beginning your
+analysis.
+
+6a) Using the summary() and glm() functions, determine the estimated
+standard errors for the coefficients associated with income
+and balance in a multiple logistic regression model that uses
+both predictors.
+```{r}
+log.fit = glm(default ~ income + balance, data = Default, family = "binomial")
+summary(log.fit)
+```
+
+5b) Write a function, boot.fn(), that takes as input the Default data
+set as well as an index of the observations, and that outputs
+the coefficient estimates for income and balance in the multiple
+logistic regression model.
+```{r}
+boot.fn = function(defaults, i) {
+  return(coef(glm(default ~ income + balance, data = defaults, family = "binomial", subset = i)))
+}
+```
+
+5c) Use the boot() function together with your boot.fn() function to
+estimate the standard errors of the logistic regression coefficients
+for income and balance.
+```{r}
+library(boot)
+boot(Default, boot.fn, 100)
+```
+
+5d) Comment on the estimated standard errors obtained using the
+glm() function and using your bootstrap function.
+
+Both of the estimated standard errors are similar
+
+## Part 2
+Ex 3, 9 from Chapter 7 of ISL.
+
+3) ![q3 image]("q3.png")
+![q3 sketch]("sketch.png")
+
+9) This question uses the variables dis (the weighted mean of distances
+to five Boston employment centers) and nox (nitrogen oxides concentration
+in parts per 10 million) from the Boston data. We will treat
+dis as the predictor and nox as the response.
+
+9a) Use the poly() function to fit a cubic polynomial regression to
+predict nox using dis. Report the regression output, and plot
+the resulting data and polynomial fits.
+```{r}
+library(MASS)
+attach(Boston)
+cubic = glm(nox ~ poly(dis, 3), data = Boston)
+summary(cubic)
+scale = seq(min(Boston$dis), max(Boston$dis), by = 0.05)
+prediction = predict(cubic, list(dis = scale))
+plot(nox ~ dis, data = Boston)
+```
+
+9b) Plot the polynomial fits for a range of different polynomial
+degrees (say, from 1 to 10), and report the associated residual
+sum of squares.
+```{r}
+residuals = rep(0, 10)
+for(i in 1:10) {
+   residuals[i] = sum(glm(nox ~ poly(dis, i), data = Boston)$residuals ^ 2)
+}
+plot(1:10, residuals)
+```
+
+9c) Perform cross-validation or another approach to select the optimal
+degree for the polynomial, and explain your results.
+```{r}
+library(boot)
+lowestMSE = rep(0, 10)
+for(i in 1:10) {
+   polynomial = glm(nox ~ poly(dis, i), data = Boston)
+   lowestMSE[i] = cv.glm(Boston, polynomial, K = 5)$delta[1]
+}
+plot(1:10, lowestMSE)
+which.min(lowestMSE)
+```
+At k = 5, 8th degree has the lowestMSE
+
+9d) Use the bs() function to fit a regression spline to predict nox
+using dis. Report the output for the fit using four degrees of
+freedom. How did you choose the knots? Plot the resulting fit.
+```{r}
+library(splines)
+spline = glm(nox ~ bs(dis, df= 4), data = Boston)
+prediction = predict(spline, data.frame(dis = scale))
+plot(nox ~ dis, data = Boston)
+lines(scale, prediction, col = "blue")
+summary(spline)
+```
+9e) Now fit a regression spline for a range of degrees of freedom, and
+plot the resulting fits and report the resulting RSS. Describe the
+results obtained.
+```{r}
+RSS = rep(0, 16)
+par(mfrow=c(3,5))
+for (i in 3:16) {
+    spline = glm(nox ~ bs(dis, df = i), data = Boston)
+    RSS[i] = sum(spline$residuals^2)
+    prediction = predict(spline, data.frame(dis=scale))
+    plot(nox ~ dis, data = Boston)
+    lines(scale, prediction, col ="blue")
+}
+```
+10f) Perform cross-validation or another approach in order to select
+the best degrees of freedom for a regression spline on this data.
+Describe your results.
+```{r}
+cv = sapply(3:16, function(i){
+  return(cv.glm(Boston, glm(nox ~ bs(dis, df = i), data=Boston), K = 5)$delta[2])
+})
+plot(3:16, cv)
+which.min(cv)
+```
+With K set to 5, 8 df will yield the lowest error
+
+## Part 3
+Ex 5, 10 from Chapter 8 of ISL.
+
+5.)
+![q5 image]("q5.png")
+In the majority case the final outcome will be Red where P(Red|X) > P(Green|X)
+6 out of 10 times. If it is done with average probability then the final outcome
+will be green
+
+10) We now use boosting to predict Salary in the Hitters data set.
+
+10a) Remove the observations for whom the salary information is
+unknown, and then log-transform the salaries.
+```{r}
+attach(Hitters)
+Hitters = na.omit(Hitters)
+Hitters$Salary = log(Hitters$Salary)
+```
+
+10b) Create a training set consisting of the first 200 observations, and
+a test set consisting of the remaining observations.
+```{r}
+training = Hitters[1:200, ]
+testing = Hitters[-(1:200), ]
+```
+
+10c) Perform boosting on the training set with 1,000 trees for a range
+of values of the shrinkage parameter lambda. Produce a plot with
+different shrinkage values on the x-axis and the corresponding
+training set MSE on the y-axis.
+```{r}
+library(gbm)
+lambda = 10^(seq(-10, -0.2, by = 0.1))
+trainingError = rep(0, length(lambda))
+for(i in 1:length(lambda)) {
+  boost = gbm(Salary ~ ., data = training, distribution = "gaussian", n.trees = 1000, shrinkage = lambda[i] )
+  prediction = predict(boost, training, n.trees = 1000)
+  trainingError[i] = mean((prediction - training$Salary)^2)
+}
+plot(lambda, trainingError)
+```
+
+10d) Produce a plot with different shrinkage values on the x-axis and
+the corresponding test set MSE on the y-axis.
+```{r}
+testError = rep(0, length(lambda))
+for(i in 1:length(lambda)) {
+  boost = gbm(Salary ~ ., data = training, distribution = "gaussian", n.trees = 1000, shrinkage = lambda[i] )
+  prediction = predict(boost, testing, n.trees = 1000)
+  testError[i] = mean((prediction - testing$Salary)^2)
+}
+plot(lambda, testError)
+min(testError)
+```
+
+10e) Compare the test MSE of boosting to the test MSE that results
+from applying two of the regression approaches seen in
+Chapters 3 and 6.
+```{r}
+#Linear
+linear = glm(Salary ~ ., data = training)
+prediction = predict(linear, testing)
+mean((prediction - testing$Salary)^2)
+
+#Ridge
+library(glmnet)
+trainingSet = model.matrix(Salary ~ ., data = training)
+testingSet = model.matrix(Salary ~ ., data = testing)
+trainingSalary = training$Salary
+ridge = glmnet(trainingSet, trainingSalary, alpha = 0)
+prediction = predict(ridge, s = 0.01, newx = testingSet)
+mean((prediction - testing$Salary)^2)
+```
+MSE is lower in both cases for Boosting
+
+10f) Which variables appear to be the most important predictors in
+the boosted model?
+```{r}
+boost = gbm(Salary ~ ., data = training, distribution = "gaussian", n.trees = 1000, shrinkage = lambda[which.min(testError)])
+summary(boost)
+```
+CAtBat is the most important
+
+10g) Now apply bagging to the training set. What is the test set MSE
+for this approach?
+```{r}
+library(randomForest)
+bagging = randomForest(Salary ~ ., data = training, ntree = 500, mtry = 19)
+prediction = predict(bagging, newdata = testing)
+mean((prediction - testing$Salary)^2)
+```
+
+MSE is slightly lower than the boosting MSE
+
+
+
+
+
+
+
+
